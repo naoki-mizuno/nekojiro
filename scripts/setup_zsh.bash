@@ -7,7 +7,7 @@ if ! _is_installed zsh; then
 fi
 
 for f in $PWD/resources/zsh/*; do
-    ln -sf $f ~/."$( basename $f )"
+    ln -s $f ~/."$( basename $f )"
 done
 
 chsh -s $( which zsh )

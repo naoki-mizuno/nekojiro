@@ -15,6 +15,6 @@ _get_from_url \
     "https://raw.githubusercontent.com/junegunn/vim-plug/master/plug.vim" \
     ~/.vim/autoload/plug.vim
 
-ln -sf $PWD/resources/vimrc ~/.vimrc
+ln -s $PWD/resources/vimrc ~/.vimrc
 
 vim -c 'PlugInstall | qa'

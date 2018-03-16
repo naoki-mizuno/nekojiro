@@ -7,4 +7,4 @@ if ! _is_installed emacs24-nox; then
 fi
 
 mkdir -p ~/.emacs
-ln -sf $PWD/resources/init.el ~/.emacs/init.el
+ln -s $PWD/resources/init.el ~/.emacs/init.el
