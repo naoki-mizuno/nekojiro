@@ -2,10 +2,8 @@
 
 DEST=$HOME/usr/share/nekojiro
 
-if [[ -d $DEST ]]; then
-    exit
+if ! [[ -d $DEST ]]; then
+    git clone https://github.com/naoki-mizuno/nekojiro "$DEST"
 fi
-
-git clone https://github.com/naoki-mizuno/nekojiro "$DEST"
 
 bash "$DEST/bin/install.bash"
