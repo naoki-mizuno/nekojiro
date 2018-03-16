@@ -1,0 +1,43 @@
+autoload -Uz colors && colors
+
+export LANG="en_US.UTF-8"
+
+path=($HOME/bin(N) \
+    $HOME/usr/bin(N) \
+    $HOME/.rbenv/bin(N) \
+    $HOME/.rbenv/shims(N) \
+    $HOME/.pyenv/bin(N) \
+    $HOME/.pyenv/shims(N) \
+    $HOME/.plenv/bin(N) \
+    $HOME/.plenv/shims(N) \
+    /usr/lib/go/bin(N) \
+    /usr/local/bin(N) \
+    /usr/bin(N) \
+    /bin(N) \
+    /usr/sbin(N) \
+    /sbin(N) \
+    $path)
+typeset -U path
+fpath=($HOME/.zsh/functions(N) \
+    $fpath)
+typeset -U fpath
+manpath=(
+    $HOME/usr/share/man(N) \
+    $manpath)
+typeset -U manpath
+
+export EDITOR="emacsclient"
+export ALTERNATE_EDITOR=""
+export HISTFILE=~/.histfile
+export HISTSIZE=6000000
+export SAVEHIST=6000000
+export WORDCHARS='*?_-.[]~=&;!#$%^(){}<>|'
+# Don't trim space after completion for these chars
+export ZLE_SPACE_SUFFIX_CHARS=$'|&'
+# Prompt "do you wish to see all N possibilities"
+# only when going out of screen
+export LISTMAX=0
+
+export XDG_DATA_HOME=$HOME/.local/share/
+export XDG_CONFIG_HOME=$HOME/.config/
+export XDG_DATA_DIRS=/usr/local/share/:/usr/share/

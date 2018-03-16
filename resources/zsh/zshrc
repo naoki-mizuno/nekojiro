@@ -1,0 +1,252 @@
+[[ -f $HOME/.zshenv ]] && source $HOME/.zshenv
+
+export ZPLUG_HOME=$HOME/.zplug
+export ZPLUG_THREADS=8
+export ZPLUG_CACHE_DIR=$HOME/.cache/zplug
+export ZPLUG_LOADFILE=$HOME/.zplug.zsh
+
+if [[ ! -f $ZPLUG_HOME/init.zsh ]]; then
+    if (( $+commands[git] )); then
+        git clone https://github.com/zplug/zplug $ZPLUG_HOME
+    else
+        echo 'git not found' >&2
+        exit 1
+    fi
+fi
+
+source $ZPLUG_HOME/init.zsh
+
+export FZF_DEFAULT_OPTS='--ansi --exact --select-1 --exit-0 --multi --cycle --no-sort'
+
+# zsh-syntax-highlighting
+ZSH_HIGHLIGHT_HIGHLIGHTERS=(brackets)
+export ZSH_HIGHLIGHT_HIGHLIGHTERS
+
+# z
+export _Z_NO_RESOLVE_SYMLINKS=1
+export _Z_NO_COMPLETE_CD=1
+
+# zaw
+zstyle ':filter-select' max-lines 10
+zstyle ':filter-select' extended-search yes
+zstyle ':filter-select' case-insensitive yes
+zstyle ':filter-select' rotate-list yes
+
+if ! zplug check; then
+    zplug install
+fi
+
+zplug load
+
+# Autoload modules
+autoload -Uz add-zsh-hook
+autoload -Uz history-search-end
+autoload -Uz is-at-least
+autoload -Uz zargs
+autoload -Uz zkbd
+autoload -Uz zmv
+
+# Functions {{{
+__source() {
+    if [[ -f $1 ]]; then
+        source "$1"
+    fi
+}
+
+__set_colors() {
+    eval "$( dircolors )"
+    export ZLS_COLORS=$LS_COLORS
+    zstyle ':completion:*:default' list-colors ${(s.:.)LS_COLORS}
+}
+
+__tmux_status_bar() {
+    if [[ -n $TMUX ]]; then
+        local switch
+        if (( $( tmux list-windows | command wc -l ) == 1 )); then
+            switch=off
+        else
+            switch=on
+        fi
+        tmux set-option status $switch
+    fi
+}
+
+__source_ros() {
+    # If no ROS, don't bother going further
+    if (( ! $+commands[rosversion] )); then
+        return
+    fi
+    typeset -gxA OLD_ROS_ENV
+
+    if [[ -z $OLD_ROS_ENV[MODIFIED] ]] || ! $OLD_ROS_ENV[MODIFIED]; then
+        # Save old state
+        OLD_ROS_ENV[CMAKE_PREFIX_PATH]="$CMAKE_PREFIX_PATH"
+        OLD_ROS_ENV[LD_LIBRARY_PATH]="$LD_LIBRARY_PATH"
+        OLD_ROS_ENV[PKG_CONFIG_PATH]="$PKG_CONFIG_PATH"
+        OLD_ROS_ENV[ROSLISP_PACKAGE_DIRECTORIES]="$ROSLISP_PACKAGE_DIRECTORIES"
+        OLD_ROS_ENV[ROS_PACKAGE_PATH]="$ROS_PACKAGE_PATH"
+    fi
+
+    # Check that the directory that we moved in is indeed a catkin workspace
+    if [[ -d src ]] && [[ -d build ]] && [[ -d devel ]] && [[ -e devel/setup.zsh ]] && [[ -e devel/.catkin ]]; then
+        OLD_ROS_ENV[MODIFIED]="true"
+        source devel/setup.zsh
+    elif $OLD_ROS_ENV[MODIFIED]; then
+        CMAKE_PREFIX_PATH="$OLD_ROS_ENV[CMAKE_PREFIX_PATH]"
+        LD_LIBRARY_PATH="$OLD_ROS_ENV[LD_LIBRARY_PATH]"
+        PKG_CONFIG_PATH="$OLD_ROS_ENV[PKG_CONFIG_PATH]"
+        ROSLISP_PACKAGE_DIRECTORIES="$OLD_ROS_ENV[ROSLISP_PACKAGE_DIRECTORIES]"
+        ROS_PACKAGE_PATH="$OLD_ROS_ENV[ROS_PACKAGE_PATH]"
+
+        OLD_ROS_ENV[MODIFIED]="false"
+    fi
+}
+# }}}
+
+# Read aliases and functions
+__source $HOME/.aliases.zsh
+__source $HOME/.functions.zsh
+
+# Compile .zshrc if necessary
+if [ ! -f $HOME/.zshrc.zwc -o $HOME/.zshrc -nt $HOME/.zshrc.zwc ]; then
+    zcompile $HOME/.zshrc
+fi
+
+# Colors {{{
+case $( uname -s ) in
+    Darwin)
+        if (( $+commands[brew] )); then
+            local gnubin="$( brew --prefix coreutils )/libexec/gnubin"
+            path=( $gnubin $path )
+
+            if (( $+commands[dircolors] )); then
+                __set_colors
+            fi
+        else
+            # Use GNU ls if available
+            if (( $+commands[gls] )); then
+                alias ls='gls'
+            else
+                alias ls='ls -G'
+            fi
+        fi
+        ;;
+    *)
+        __set_colors
+        ;;
+esac
+# }}}
+
+# In tmux, don't show status bar if there's only one window
+add-zsh-hook precmd __tmux_status_bar
+add-zsh-hook chpwd __source_ros
+
+# enable cursor selection
+zstyle ':completion:*:default' menu select=1
+zstyle ':completion:*:(processes|jobs)' command "ps -u $USER"
+
+# Limit Coredump size
+if ! [[ ${(L)$( uname -s )} =~ cygwin ]]; then
+    limit coredumpsize 102400
+fi
+
+# Options {{{
+setopt auto_cd              # cd when only directory is entered
+setopt auto_list            # Show list of completion
+setopt auto_name_dirs       # Use named dirs automatically
+setopt auto_param_keys      # Complete variables
+setopt auto_param_slash     # Complete / automatically
+setopt auto_pushd
+setopt auto_remove_slash    # Remove trailing / automatically
+setopt auto_resume          # Resume when suspended command is entered
+setopt cdable_vars          # cd to named dirs without leading ~
+setopt correct              # Suggest correction
+setopt extended_glob
+setopt extended_history
+is-at-least 5.2 && setopt glob_star_short
+setopt hist_ignore_all_dups
+setopt hist_ignore_space    # Don't add commands that start with space
+setopt hist_reduce_blanks
+setopt hist_save_no_dups    # Add only last command on duplicate
+setopt hist_verify          # Edit before running history
+setopt interactive_comments # Use pound comments in interacive shells
+setopt list_packed          # Compact list
+setopt list_types           # Show file types
+setopt long_list_jobs       # Set jobs -l as the output for jobs
+setopt magic_equal_subst    # Completion like --prefix=/usr etc.
+setopt no_beep
+setopt no_flow_control      # C-s for incremental forward search
+setopt no_nomatch           # Allow things like HEAD^^ in Git repositories
+setopt numeric_glob_sort
+setopt prompt_subst
+setopt pushd_ignore_dups    # Don't pushd the same directory
+setopt share_history
+unsetopt auto_menu          # Don't change completion with Tab
+unsetopt prompt_cr          # Show lines without trailing \n
+# }}}
+
+# Key bindings {{{
+# emacs keybinding
+bindkey -e
+bindkey -M emacs "\en" down-line-or-history
+bindkey -M emacs "\ep" up-line-or-history
+bindkey -r "$key[Up]"
+bindkey -r "$key[Down]"
+bindkey -r "$key[Left]"
+bindkey -r "$key[Right]"
+
+# Better history search
+zle -N history-beginning-search-backward-end history-search-end
+zle -N history-beginning-search-forward-end history-search-end
+bindkey '^P' history-beginning-search-backward-end
+bindkey '^N' history-beginning-search-forward-end
+
+# Incremental backward search starting from previously executed command {{{
+history-incremental-pattern-search-backward-start-from-previous() {
+    CMD=$BUFFER
+    zle up-history
+    zle history-incremental-pattern-search-backward
+
+    # Was aborted
+    # Either works
+    #if [ "$KEYS" == "" ] || [ "$KEYS" == "" ] || [ "$KEYS" == "" ]; then
+    if (( #KEYS == ##\C-g )) || (( #KEYS == ##\C-c )) || (( #KEYS == ##\C-\\ )); then
+        BUFFER=$CMD
+    fi
+}
+zle -N history-incremental-pattern-search-backward-start-from-previous
+# }}}
+
+# bindkey '' history-incremental-pattern-search-backward
+bindkey '^R' history-incremental-pattern-search-backward-start-from-previous
+bindkey '^S' history-incremental-pattern-search-forward
+
+bindkey -M isearch '^H' backward-kill-word
+bindkey -M isearch '^R' history-incremental-pattern-search-backward
+
+zmodload zsh/complist
+# Start menu comple with Shift-Tab
+bindkey "\e[Z" menu-complete
+# Use Shift-Tab to reverse traverse completion list
+bindkey -M menuselect "\e[Z" reverse-menu-complete
+
+# zaw
+# M-z for zaw-history
+bindkey "\ez" zaw-history
+# C-M-z for zaw-z
+bindkey "\e^Z" zaw-z
+# C-x ; for zaw
+bindkey "^X;" zaw
+# }}}
+
+(( $+commands[rbenv] )) && eval "$( rbenv init - )"
+(( $+commands[pyenv] )) && eval "$( pyenv init - )"
+(( $+commands[plenv] )) && eval "$( plenv init - )"
+
+# Settings for prompt
+__source $HOME/.prompt.zsh
+
+# Read local configs if any
+__source $HOME/.localrc/zshrc
+
+# vim: foldmethod=marker ft=zsh

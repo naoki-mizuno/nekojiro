@@ -1,0 +1,45 @@
+if 0 | endif
+
+set backup
+set backupdir=~/.vim/backups/
+set viewdir=~/.vim/view/
+set undodir=~/.vim/undo/
+set undofile
+set tabstop=4
+set softtabstop=4
+set expandtab
+set shiftwidth=4
+set shiftround
+set textwidth=78
+set number
+set wildmode=longest,list
+set foldenable
+set foldmethod=marker
+set viewoptions=cursor,folds
+set fileencodings=ucs-bom,utf-8,iso-2022-jp,sjis,cp932,euc-jp,cp20932,utf-16,utf-16le,guess
+set splitright
+set splitbelow
+set modeline
+set completeopt-=preview
+set autoread
+set showtabline=0
+set formatoptions+=nmBj
+set updatetime=500
+set autoindent
+set smartindent
+set formatlistpat=^\\s*\\(\\d\\+[\\]:.)}\\t\ ]\\\|[*+-]\\)\\s*
+set matchpairs+=<:>
+let mapleader = ','
+noremap \ ,
+noremap <Up> <Nop>
+noremap <Down> <Nop>
+noremap <Left> <Nop>
+noremap <Right> <Nop>
+syntax on
+
+call plug#begin('~/.vim/plugged')
+
+" Plugins
+Plug 'tpope/vim-sensible'
+
+call plug#end()
