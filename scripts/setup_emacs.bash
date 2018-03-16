@@ -11,4 +11,4 @@ if [[ -f ~/.emacs ]]; then
 fi
 
 mkdir -p ~/.emacs.d
-ln -s $PWD/resources/init.el ~/.emacs.d/init.el
+ln -s $PWD/resources/init.el ~/.emacs.d/init.el 2>/dev/null
