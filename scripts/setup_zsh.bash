@@ -11,3 +11,6 @@ for f in $PWD/resources/zsh/*; do
 done
 
 chsh -s $( which zsh )
+
+git clone https://github.com/jhawthorn/fzy ~/usr/share/fzy
+( cd ~/usr/share/fzy && PREFIX=$HOME/usr make install )

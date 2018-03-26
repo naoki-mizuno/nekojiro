@@ -26,6 +26,8 @@ zplug 'Valodim/zsh-curl-completion', \
 zplug 'zsh-users/zsh-syntax-highlighting', \
     defer:3
 
+zplug 'b4b4r07/enhancd', use:init.sh
+
 zplug 'knu/z', \
     use:'z.sh', \
     defer:1
